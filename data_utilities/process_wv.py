@@ -127,6 +127,10 @@ _multires: multiple resolutions. Currently [(500,500),(400,400),(300,300),(200,2
 _aug: Augmented dataset
 '''
 
+train_json = {'dataset':[]}
+test_json = {'dataset':[]}
+train_dir = '/home/mattias/projects/GANs/data/chipped_images/train'
+test_dir = '/home/mattias/projects/GANs/data/chipped_images/test'
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("image_folder", help="Path to folder containing image chips (ie 'Image_Chips/' ")
@@ -155,7 +159,7 @@ if __name__ == "__main__":
     test_chips = 0
 
     #Parameters
-    max_chips_per_res = 100000
+    max_chips_per_res = 1000000
     train_writer = tf.python_io.TFRecordWriter("xview_train_%s.record" % args.suffix)
     test_writer = tf.python_io.TFRecordWriter("xview_test_%s.record" % args.suffix)
 
@@ -168,7 +172,6 @@ if __name__ == "__main__":
 
         fnames = glob.glob(args.image_folder + "*.tif")
         fnames.sort()
-
         for fname in tqdm(fnames):
             #Needs to be "X.tif", ie ("5.tif")
             #Be careful!! Depending on OS you may need to change from '/' to '\\'.  Use '/' for UNIX and '\\' for windows
@@ -180,7 +183,6 @@ if __name__ == "__main__":
             #Shuffle images & boxes all at once. Comment out the line below if you don't want to shuffle images
             im,box,classes_final = shuffle_images_and_boxes_classes(im,box,classes_final)
             split_ind = int(im.shape[0] * args.test_percent)
-
             for idx, image in enumerate(im):
                 tf_example = tfr.to_tf_example(image,box[idx],classes_final[idx])
 
@@ -190,13 +192,26 @@ if __name__ == "__main__":
                 
                 if (ind_chips < max_chips_per_res and np.array(float_list_value).any()):
                     tot_box+=np.array(float_list_value).shape[0]
-                    
+                    image_data = {
+                            'bounding_boxes':box[idx].tolist(),
+                            'labels':classes_final[idx].tolist(),
+                            'id':str(ind_chips)+'.jpg',
+                            'width':int(image.shape[0]),
+                            'height':int(image.shape[1])
+                    }
                     if idx < split_ind:
-                        test_writer.write(tf_example.SerializeToString())
+                        # test_writer.write(tf_example.SerializeToString())
+                        test_json['dataset'].append(image_data)
                         test_chips+=1
+                        im = Image.fromarray(image)
+                        im.save(os.path.join(test_dir,str(ind_chips)+'.jpg'))
                     else:
-                        train_writer.write(tf_example.SerializeToString())
-                        train_chips += 1
+                        # train_writer.write(tf_example.SerializeToString())
+                        train_json['dataset'].append(image_data)
+                        train_chips+=1
+                        im = Image.fromarray(image)
+                        im.save(os.path.join(train_dir,str(ind_chips)+'.jpg'))
+
      
                     ind_chips +=1
 
@@ -253,3 +268,11 @@ if __name__ == "__main__":
     logging.info("saved: %d test chips" % test_chips)
     train_writer.close()
     test_writer.close() 
+
+
+    
+with open(os.path.join(test_dir,'xview_test_chips.json'), 'w') as outfile:
+    json.dump(test_json, outfile)    
+
+with open(os.path.join(train_dir,'xview_train_chips.json'), 'w') as outfile:
+    json.dump(train_json, outfile)    

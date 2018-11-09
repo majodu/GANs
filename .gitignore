@@ -1,4 +1,6 @@
 /bin
 /lib
-/training_data
+/data
 /mnist
+*.pyc
+*.cpython*

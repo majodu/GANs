@@ -1,4 +1,4 @@
 {
     "git.ignoreLimitWarning": true,
-    "python.pythonPath": "/Users/mattiasduffy/miniconda3/bin/python"
+    "python.pythonPath": "/home/mattias/miniconda3/envs/gans/bin/python"
 }

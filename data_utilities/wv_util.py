@@ -111,12 +111,11 @@ def chip_image(img,coords,classes,shape=(300,300)):
     """
     height,width,_ = img.shape
     wn,hn = shape
-    
+     
     w_num,h_num = (int(width/wn),int(height/hn))
     images = np.zeros((w_num*h_num,hn,wn,3))
     total_boxes = {}
     total_classes = {}
-    
     k = 0
     for i in range(w_num):
         for j in range(h_num):
@@ -131,7 +130,6 @@ def chip_image(img,coords,classes,shape=(300,300)):
                                           np.clip(outn[:,2]-(wn*i),0,wn),
                                           np.clip(outn[:,3]-(hn*j),0,hn))))
             box_classes = classes[x][y]
-            
             if out.shape[0] != 0:
                 total_boxes[k] = out
                 total_classes[k] = box_classes
